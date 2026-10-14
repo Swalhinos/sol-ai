@@ -95,9 +95,16 @@
       </div>
       <div class="ad-card">
         <h2>AI settings</h2>
+        <label class="ad-field">Provider
+          <select id="sProvider" class="ad-select">
+            <option value="gemini">Gemini (Google)</option>
+            <option value="groq">Groq (ultra-fast)</option>
+          </select>
+        </label>
         <label class="ad-field">Model
           <input id="sModel" type="text" placeholder="gemini-3.5-flash">
         </label>
+        <p class="muted" id="modelHint"></p>
         <label class="ad-field">System prompt
           <textarea id="sSystem" placeholder="Instructions the AI always follows..."></textarea>
         </label>
