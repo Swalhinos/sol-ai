@@ -1,8 +1,11 @@
 "use strict";
-/* POST /api/chat — validate token, stream Gemini SSE straight through.
-   maxDuration is raised in vercel.json so long replies are not cut. */
+/* POST /api/chat — validate token, stream the AI reply.
+   Providers: Gemini (native SSE) and Groq (OpenAI-compatible SSE).
+   Groq chunks are translated to Gemini-shaped SSE so the frontend's
+   single parser works for both. maxDuration is raised in vercel.json
+   so long replies are not cut. */
 const { readJson, sendJson, method } = require("../lib/http");
-const { getTokens, findValid, getSettings, rateOk, logUsage, saveTokens, estTokens } = require("../lib/store");
+const { getTokens, findValid, getSettings, rateOk, logUsage, saveTokens, estTokens, effectiveModel, AVAILABLE_MODELS } = require("../lib/store");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return method(res, "POST");
@@ -19,40 +22,70 @@ module.exports = async (req, res) => {
     if (tok.maxMsg && tok.usedMsg >= tok.maxMsg)
       return sendJson(res, 403, { error: "This token has reached its message limit." });
 
-    const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
-    if (!GEMINI_KEY) return sendJson(res, 500, { error: "Server is not configured (missing API key)." });
-
     // Keep history small: oversized payloads slow down every request.
     const msgs = Array.isArray(body.messages) ? body.messages.slice(-24) : [];
     if (!msgs.length || !msgs.every(m => m && typeof m.text === "string"))
       return sendJson(res, 400, { error: "Bad messages." });
 
-    const gBody = {
-      contents: msgs.map(m => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.text.slice(0, 12000) }]
-      })),
-      generationConfig: {}
-    };
-    if (cfg.system && cfg.system.trim())
-      gBody.systemInstruction = { parts: [{ text: cfg.system.trim().slice(0, 8000) }] };
+    let provider = cfg.provider === "groq" ? "groq" : "gemini";
+    let model = effectiveModel(cfg);
+    // The chatter may pick a model in the chat UI. Only an allowlisted
+    // model (or the admin's own saved model) is accepted; anything else
+    // falls back to the admin default.
+    const wantP = String((body && body.provider) || "").toLowerCase();
+    const wantM = String((body && body.model) || "").trim().slice(0, 120);
+    if ((wantP === "gemini" || wantP === "groq") && wantM &&
+        (AVAILABLE_MODELS.some(m => m.provider === wantP && m.model === wantM) ||
+         (wantM === model && wantP === provider))) {
+      provider = wantP;
+      model = wantM;
+    }
     const temp = Number(cfg.temp);
-    if (Number.isFinite(temp)) gBody.generationConfig.temperature = Math.max(0, Math.min(2, temp));
+    const tempClamped = Number.isFinite(temp) ? Math.max(0, Math.min(2, temp)) : 1;
     const mt = Number(cfg.maxTokens);
-    if (Number.isFinite(mt) && mt > 0)
-      gBody.generationConfig.maxOutputTokens = Math.max(1, Math.min(128000, Math.floor(mt)));
+    const maxOut = Number.isFinite(mt) && mt > 0 ? Math.max(1, Math.min(128000, Math.floor(mt))) : 2048;
+    const system = (cfg.system && cfg.system.trim()) ? cfg.system.trim().slice(0, 8000) : "";
 
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/"
-      + encodeURIComponent(cfg.model || "gemini-3.5-flash")
-      + ":streamGenerateContent?alt=sse&key=" + encodeURIComponent(GEMINI_KEY);
+    let url, reqHeaders, reqBody;
+    if (provider === "groq") {
+      const GROQ_KEY = process.env.GROQ_API_KEY || "";
+      if (!GROQ_KEY) return sendJson(res, 500, { error: "Server is not configured (missing Groq API key)." });
+      url = "https://api.groq.com/openai/v1/chat/completions";
+      reqHeaders = { "Content-Type": "application/json", "Authorization": "Bearer " + GROQ_KEY };
+      reqBody = {
+        model,
+        messages: [
+          ...(system ? [{ role: "system", content: system }] : []),
+          ...msgs.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text.slice(0, 12000) }))
+        ],
+        temperature: tempClamped,
+        max_tokens: maxOut,
+        stream: true
+      };
+    } else {
+      const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
+      if (!GEMINI_KEY) return sendJson(res, 500, { error: "Server is not configured (missing API key)." });
+      url = "https://generativelanguage.googleapis.com/v1beta/models/"
+        + encodeURIComponent(model)
+        + ":streamGenerateContent?alt=sse&key=" + encodeURIComponent(GEMINI_KEY);
+      reqHeaders = { "Content-Type": "application/json" };
+      reqBody = {
+        contents: msgs.map(m => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.text.slice(0, 12000) }]
+        })),
+        generationConfig: { temperature: tempClamped, maxOutputTokens: maxOut }
+      };
+      if (system) reqBody.systemInstruction = { parts: [{ text: system }] };
+    }
 
     let gRes = null, attempt = 0;
     for (;;) {
       try {
         gRes = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(gBody)
+          headers: reqHeaders,
+          body: JSON.stringify(reqBody)
         });
       } catch (e) {
         return sendJson(res, 502, { error: "Could not reach the AI service. Try again." });
@@ -105,7 +138,6 @@ module.exports = async (req, res) => {
         if (r.done || clientGone) break;
         const chunk = dec.decode(r.value, { stream: true });
         buf += chunk;
-        res.write(chunk);
         const lines = buf.split("\n"); buf = lines.pop();
         for (const ln of lines) {
           const t = ln.trim();
@@ -114,8 +146,19 @@ module.exports = async (req, res) => {
           if (!p || p === "[DONE]") continue;
           try {
             const j = JSON.parse(p);
-            const parts = j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
-            if (parts) parts.forEach(x => { if (x.text) outText += x.text; });
+            if (provider === "groq") {
+              // OpenAI-format chunk -> Gemini-shaped chunk for the frontend.
+              const ch0 = (j.choices && j.choices[0]) || {};
+              const txt = (ch0.delta && ch0.delta.content) || (ch0.message && ch0.message.content) || "";
+              if (txt) {
+                outText += txt;
+                res.write("data: " + JSON.stringify({ candidates: [{ content: { parts: [{ text: txt }] } }] }) + "\n\n");
+              }
+            } else {
+              const parts = j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
+              if (parts) parts.forEach(x => { if (x.text) outText += x.text; });
+              res.write(ln + "\n");
+            }
           } catch (e) {}
         }
       }
@@ -128,7 +171,7 @@ module.exports = async (req, res) => {
       tok.usedTok = (tok.usedTok || 0) + inT + outT;
       await Promise.all([
         saveTokens(tokens),
-        logUsage({ t: Date.now(), tokenId: tok.id, model: cfg.model, inT, outT, ok: true })
+        logUsage({ t: Date.now(), tokenId: tok.id, model, inT, outT, ok: true })
       ]);
     }
   } catch (e) {
