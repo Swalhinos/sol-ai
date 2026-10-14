@@ -55,10 +55,10 @@ async function loadTokens(){
     k.title="Click to copy token";
     k.addEventListener("click",()=>navigator.clipboard.writeText(t.token).then(()=>toast("Token copied")).catch(()=>toast("Copy failed")));
     d.querySelector('[data-op="rev"]').addEventListener("click",async()=>{
-      await api("/api/admin/tokens/"+t.id+"/revoke",{method:"POST"});loadTokens();});
+      await api("/api/admin/tokens-action",{method:"POST",body:JSON.stringify({id:t.id,op:"revoke"})});loadTokens();});
     d.querySelector('[data-op="del"]').addEventListener("click",async()=>{
       if(!confirm("Delete token for "+t.name+"?"))return;
-      await api("/api/admin/tokens/"+t.id,{method:"DELETE"});loadTokens();loadStats();});
+      await api("/api/admin/tokens-action",{method:"POST",body:JSON.stringify({id:t.id,op:"delete"})});loadTokens();loadStats();});
     box.appendChild(d);
   });
 }
