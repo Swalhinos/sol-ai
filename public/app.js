@@ -30,9 +30,10 @@ function loadConvos(){
   return Array.isArray(c)?c:[];
 }
 const state={token:store.get("token",null),name:"",conversations:[],
-  activeId:null,sending:false,theme:store.get("theme","auto"),dir:store.get("dir","ltr")};
+  activeId:null,sending:false,theme:store.get("theme","auto"),dir:store.get("dir","ltr"),
+  modelChoice:store.get("modelChoice",null)};
 state.conversations=loadConvos();
-function persist(){if(state.token)store.set(convosKey(),state.conversations);store.set("theme",state.theme);store.set("dir",state.dir);}
+function persist(){if(state.token)store.set(convosKey(),state.conversations);store.set("theme",state.theme);store.set("dir",state.dir);store.set("modelChoice",state.modelChoice);}
 const active=()=>state.conversations.find(c=>c.id===state.activeId)||null;
 
 /* ================= theme / dir ================= */
@@ -80,9 +81,31 @@ async function loadConfig(){
       $("announceTxt").textContent=j.announcement;$("announce").hidden=false;
       $("announceX").onclick=()=>{$("announce").hidden=true;store.set("annSeen",""+j.announcement);};
     }
-    if(j.model)$("modelTagName").textContent=String(j.model).split("/").pop();
+    if(Array.isArray(j.models)&&j.models.length){
+      const sel=$("modelSel");sel.innerHTML="";
+      const groups={};
+      j.models.forEach(m=>{(groups[m.provider]=groups[m.provider]||[]).push(m);});
+      Object.keys(groups).forEach(p=>{
+        const og=document.createElement("optgroup");og.label=p==="groq"?"Groq":"Gemini";
+        groups[p].forEach(m=>{const o=document.createElement("option");
+          o.value=p+":"+m.model;o.textContent=m.label||m.model;og.appendChild(o);});
+        sel.appendChild(og);
+      });
+      const def=(j.provider||"gemini")+":"+(j.model||"");
+      const sv=state.modelChoice&&state.modelChoice.provider&&state.modelChoice.model
+        ?state.modelChoice.provider+":"+state.modelChoice.model:null;
+      const has=v=>v&&Array.from(sel.options).some(o=>o.value===v);
+      sel.value=has(sv)?sv:has(def)?def:sel.options[0].value;
+      state.modelChoice={provider:sel.value.split(":")[0],model:sel.value.slice(sel.value.indexOf(":")+1)};
+      persist();
+    }
   }catch(e){}
 }
+$("modelSel").addEventListener("change",()=>{
+  const v=$("modelSel").value;
+  state.modelChoice={provider:v.split(":")[0],model:v.slice(v.indexOf(":")+1)};
+  persist();
+});
 
 /* ================= history ================= */
 function dayGroup(ts){const d=new Date(ts),n=new Date();
@@ -235,8 +258,9 @@ async function send(text){
     $("chat").scrollTop=$("chat").scrollHeight;};
   try{
     const msgs=c.messages.filter(m=>!m.text.startsWith("Error:")).map(m=>({role:m.role,text:m.text}));
+    const mc=state.modelChoice||{};
     const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({token:state.token,messages:msgs})});
+      body:JSON.stringify({token:state.token,messages:msgs,provider:mc.provider,model:mc.model})});
     if(!res.ok){let em="Request failed";try{const j=await res.json();if(j.error)em=j.error;}catch(e){}
       if(res.status===403){store.del("token");em+=" — token invalid. Reload and enter a valid token.";}
       throw new Error(em);}
