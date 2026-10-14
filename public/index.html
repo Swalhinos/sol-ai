@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SOL.ai</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<!-- ============ TOKEN GATE ============ -->
+<div id="gate" class="gate" hidden>
+  <div class="gate-card">
+    <div class="gate-logo"><span class="ai-logo lg" id="gateLogo"></span></div>
+    <h1>Welcome to SOL.ai</h1>
+    <p>Enter your personal access token to start chatting.</p>
+    <div class="gate-row">
+      <input id="gateToken" type="text" placeholder="sx-..." autocomplete="off" spellcheck="false" aria-label="Access token">
+      <button id="gateBtn" class="btn-primary">Enter</button>
+    </div>
+    <div class="gate-err" id="gateErr" role="alert"></div>
+    <div class="gate-foot">Ask the site owner for a token if you don't have one.</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <div class="scrim" id="scrim"></div>
+  <aside id="sidebar" aria-label="Conversations">
+    <div class="sb-head">
+      <div class="brand"><span class="ai-logo" id="brandLogo"></span><span>SOL.ai</span></div>
+      <button class="sb-new" id="newChatTop" title="New chat (Ctrl+K)" aria-label="New chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+    <div class="sb-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="histSearch" type="text" placeholder="Search chats" aria-label="Search chats">
+    </div>
+    <nav id="history" aria-label="Chat history"></nav>
+    <div class="sb-foot">
+      <button class="icon-btn" id="themeBtn" title="Theme: dark / light / auto" aria-label="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <button class="icon-btn" id="dirBtn" title="RTL / LTR" aria-label="Toggle direction">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h13M4 12h9M4 18h13"/><path d="m17 9 3 3-3 3"/></svg>
+      </button>
+      <span class="sp"></span>
+      <button class="icon-btn" id="logoutBtn" title="Sign out (forget token)" aria-label="Sign out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="title" id="chatTitle">New conversation</div>
+      <span class="model-tag" id="modelTag" title="AI model"><span class="dot"></span><span id="modelTagName">…</span></span>
+    </header>
+    <div class="announce" id="announce" hidden><span id="announceTxt"></span><button id="announceX" aria-label="Dismiss">×</button></div>
+    <main id="chat" aria-live="polite"><div class="chat-col" id="chatCol"></div></main>
+    <div class="composer-zone">
+      <div class="composer">
+        <textarea id="prompt" rows="1" placeholder="Message SOL.ai..." aria-label="Message"></textarea>
+        <div class="composer-row">
+          <span class="sp"></span>
+          <button id="sendBtn" aria-label="Send" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 19V5m-7 7 7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="disclaimer">SOL.ai can make mistakes. Consider checking important information.</div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="/app.js"></script>
+</body>
+</html>
