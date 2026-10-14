@@ -3,8 +3,8 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let toastT=0;
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
-const SPARK='<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2c.8 5.2 4.8 9.2 10 10-5.2.8-9.2 4.8-10 10-.8-5.2-4.8-9.2-10-10 5.2-.8 9.2-4.8 10-10Z"/></svg>';
-$("adLogo").innerHTML=SPARK;
+const DOTS='<svg viewBox="0 0 64 40" fill="none"><circle cx="11" cy="27" r="9" fill="#F2A98C"/><circle cx="32" cy="13" r="12" fill="#E07A52"/><circle cx="53" cy="27" r="9" fill="#C96A44"/></svg>';
+$("adLogo").innerHTML=DOTS;$("loginLogo").innerHTML=DOTS;
 const ses=()=>sessionStorage.getItem("sw_admin")||"";
 const api=async(path,opts)=>{
   const r=await fetch(path,Object.assign({headers:{"Content-Type":"application/json","x-admin-session":ses()}},opts||{}));
@@ -29,12 +29,15 @@ $("aloginBtn").addEventListener("click",doLogin);
 $("apass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
 $("alogout").addEventListener("click",()=>{sessionStorage.removeItem("sw_admin");showLogin();});
 /* ---------- tabs ---------- */
-document.querySelectorAll(".ad-tab").forEach(b=>b.addEventListener("click",()=>{
-  document.querySelectorAll(".ad-tab").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  ["tokens","stats","settings"].forEach(t=>$("tab-"+t).hidden=t!==b.dataset.tab);
-  if(b.dataset.tab==="stats")loadStats();if(b.dataset.tab==="settings")loadSettings();
-}));
+function goTab(name){
+  document.querySelectorAll(".ad-tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
+  ["overview","tokens","stats","settings"].forEach(t=>$("tab-"+t).hidden=t!==name);
+  if(name==="overview"||name==="stats")loadStats();
+  if(name==="tokens")loadTokens();
+  if(name==="settings")loadSettings();
+}
+document.querySelectorAll(".ad-tab").forEach(b=>b.addEventListener("click",()=>goTab(b.dataset.tab)));
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>goTab(b.dataset.goto)));
 /* ---------- tokens ---------- */
 async function loadTokens(){
   const list=await api("/api/admin/tokens");
@@ -51,6 +54,12 @@ async function loadTokens(){
     d.querySelector(".nm").textContent=t.name;
     d.querySelector(".meta").textContent=new Date(t.created).toLocaleDateString()+" · "+
       t.usedMsg+" msgs"+(t.maxMsg?" / "+t.maxMsg+" max":"")+" · ~"+(t.usedTok||0).toLocaleString()+" tokens";
+    if(t.maxMsg){
+      const pct=Math.min(100,Math.round((t.usedMsg||0)/t.maxMsg*100));
+      const u=document.createElement("div");u.className="usage";
+      u.innerHTML='<div class="bar"><i style="width:'+pct+'%"></i></div><span>'+(t.usedMsg||0)+" / "+t.maxMsg+" messages ("+pct+"%)</span>";
+      d.appendChild(u);
+    }
     const k=d.querySelector(".key");k.textContent=t.token;
     k.title="Click to copy token";
     k.addEventListener("click",()=>navigator.clipboard.writeText(t.token).then(()=>toast("Token copied")).catch(()=>toast("Copy failed")));
@@ -78,7 +87,9 @@ async function loadStats(){
   const s=await api("/api/admin/stats");
   const items=[["Tokens",s.tokens],["Active",s.activeTokens],["Messages",s.totalMsg],
     ["~Tokens used",(s.totalTok||0).toLocaleString()],["Last 24h msgs",s.last24h],["Model",String(s.model||"").split("/").pop()]];
-  $("statGrid").innerHTML=items.map(([l,v])=>'<div class="stat"><div class="v">'+esc(String(v))+'</div><div class="l">'+l+"</div></div>").join("");
+  const html=items.map(([l,v])=>'<div class="stat"><div class="v">'+esc(String(v))+'</div><div class="l">'+l+"</div></div>").join("");
+  $("statGrid").innerHTML=html;
+  $("ovGrid").innerHTML=items.slice(0,4).map(([l,v])=>'<div class="stat"><div class="v">'+esc(String(v))+'</div><div class="l">'+l+"</div></div>").join("");
 }
 /* ---------- settings ---------- */
 async function loadSettings(){
