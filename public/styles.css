@@ -48,7 +48,7 @@ input,textarea{font-family:inherit;color:inherit}
 @keyframes logoBreathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:.7}}
 
 /* ---------- layout ---------- */
-#app{display:flex;height:100dvh;overflow:hidden}
+#app{display:flex;height:100vh;height:100dvh;overflow:hidden}
 #sidebar{width:268px;flex-shrink:0;background:var(--bg);border-inline-end:1px solid var(--line);display:flex;flex-direction:column}
 #app.sb-collapsed #sidebar{margin-inline-start:-268px;transition:margin .3s var(--ease)}
 #sidebar{transition:margin .3s var(--ease),transform .3s var(--ease)}
@@ -64,7 +64,7 @@ input,textarea{font-family:inherit;color:inherit}
 [dir="rtl"] .sb-search input{padding:8px 34px 8px 10px}
 .sb-search input:focus{border-color:var(--accent)}
 .sb-search input::placeholder{color:var(--faint)}
-#history{flex:1;overflow-y:auto;padding:2px 10px 12px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+#history{flex:1;min-height:0;overflow-y:auto;padding:2px 10px 12px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
 .hist-group{font-size:.72rem;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;padding:12px 8px 5px}
 .hist-item{display:flex;align-items:center;gap:8px;width:100%;text-align:start;padding:9px 10px;border-radius:10px;font-size:.88rem;transition:background .15s}
 .hist-item:hover{background:var(--surface2)}
@@ -81,7 +81,7 @@ input,textarea{font-family:inherit;color:inherit}
 .icon-btn:hover{background:var(--surface2);color:var(--ink)}
 .icon-btn svg{width:19px;height:19px}
 
-.main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
 .topbar{height:60px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--line)}
 .topbar .title{font-weight:600;font-size:.95rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .model-tag{display:flex;align-items:center;gap:8px;border:1px solid var(--accent);background:var(--accent-soft);
@@ -94,7 +94,8 @@ input,textarea{font-family:inherit;color:inherit}
 .announce span{flex:1}
 .announce button{font-size:1.1rem;color:var(--accent-deep);opacity:.7}.announce button:hover{opacity:1}
 
-#chat{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+#chat{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
 .chat-col{max-width:780px;margin:0 auto;padding:34px 22px 20px;display:flex;flex-direction:column;gap:22px;min-height:100%}
 #home{text-align:center;padding-top:6vh;animation:rise .5s var(--ease) both}
 #home .ai-logo{width:58px;margin:0 auto 20px}
