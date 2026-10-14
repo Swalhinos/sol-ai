@@ -10,6 +10,7 @@ module.exports = async (req, res) => {
     if (req.method === "POST") {
       const b = await readJson(req);
       const cfg = await getSettings();
+      if (b.provider === "gemini" || b.provider === "groq") cfg.provider = b.provider;
       if (typeof b.model === "string" && b.model.trim()) cfg.model = b.model.trim().slice(0, 120);
       if (typeof b.system === "string") cfg.system = b.system.slice(0, 8000);
       if (b.temp !== undefined && b.temp !== "") cfg.temp = Math.max(0, Math.min(2, Number(b.temp) || 0));
