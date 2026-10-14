@@ -57,22 +57,31 @@ module.exports = async (req, res) => {
       } catch (e) {
         return sendJson(res, 502, { error: "Could not reach the AI service. Try again." });
       }
-      if ((gRes.status === 429 || gRes.status === 503) && attempt < 2) {
+      // 503 = temporary capacity crunch on Google's side: be patient, it
+      // usually clears within seconds. 429 = rate limit: back off longer.
+      // Honor Google's Retry-After header when present (capped at 10s).
+      if ((gRes.status === 429 || gRes.status === 503) && attempt < 3) {
         attempt++;
-        // Short backoff: long waits here were the biggest perceived slowdown.
-        await new Promise(r => setTimeout(r, 900 * attempt));
+        let wait = gRes.status === 503 ? 1200 * attempt : 2000 * attempt;
+        try {
+          const ra = Number(gRes.headers && gRes.headers.get && gRes.headers.get("Retry-After"));
+          if (Number.isFinite(ra) && ra > 0) wait = Math.min(ra * 1000, 10000);
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, wait));
         continue;
       }
       break;
     }
     if (!gRes.ok) {
+      if (gRes.status === 503)
+        return sendJson(res, 503, { error: "The AI is busy right now (high demand). Please wait a moment and try again." });
       let detail = "";
       try {
         const t = await gRes.text();
         const j = JSON.parse(t);
         if (j.error && j.error.message) detail = " — " + String(j.error.message).slice(0, 220);
       } catch (e) {}
-      return sendJson(res, gRes.status === 429 || gRes.status === 503 ? 503 : 502,
+      return sendJson(res, gRes.status === 429 ? 503 : 502,
         { error: "AI service error (" + gRes.status + ")." + detail });
     }
 
