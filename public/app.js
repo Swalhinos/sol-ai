@@ -10,9 +10,9 @@ const store={
 };
 let toastT=0;
 function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2600);}
-const SPARK='<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2c.8 5.2 4.8 9.2 10 10-5.2.8-9.2 4.8-10 10-.8-5.2-4.8-9.2-10-10 5.2-.8 9.2-4.8 10-10Z"/></svg>';
-const logoHTML=cls=>'<span class="ai-logo'+(cls?" "+cls:"")+'">'+SPARK+'</span>';
-$("gateLogo").innerHTML=SPARK;$("brandLogo").innerHTML=SPARK;
+const DOTS='<svg viewBox="0 0 64 40" fill="none"><circle cx="11" cy="27" r="9" fill="#F2A98C"/><circle cx="32" cy="13" r="12" fill="#E07A52"/><circle cx="53" cy="27" r="9" fill="#C96A44"/></svg>';
+const logoHTML=cls=>'<span class="ai-logo'+(cls?" "+cls:"")+'">'+DOTS+'</span>';
+$("gateLogo").innerHTML=DOTS;$("brandLogo").innerHTML=DOTS;
 
 const state={token:store.get("token",null),name:"",conversations:store.get("convos",[]),
   activeId:null,sending:false,theme:store.get("theme","auto"),dir:store.get("dir","ltr")};
@@ -197,8 +197,10 @@ async function send(text){
   col.appendChild(think);$("chat").scrollTop=$("chat").scrollHeight;
   const body=document.createElement("div");body.className="body";body.dir="auto";
   const caret=document.createElement("span");caret.className="caret";
-  let started=false,streamed="",paintId=0;
-  const paint=()=>{paintId=0;body.innerHTML=md(streamed);body.appendChild(caret);
+  let started=false,streamed="",paintId=0,lastPaint=0;
+  const paint=()=>{paintId=0;const now=Date.now();
+    if(now-lastPaint<90){paintId=requestAnimationFrame(paint);return;}
+    lastPaint=now;body.innerHTML=md(streamed);body.appendChild(caret);
     const ch=$("chat");if(ch.scrollHeight-ch.scrollTop-ch.clientHeight<120)ch.scrollTop=ch.scrollHeight;};
   const schedule=()=>{if(!paintId)paintId=requestAnimationFrame(paint);};
   const actionsHTML=
