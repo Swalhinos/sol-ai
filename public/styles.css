@@ -84,11 +84,11 @@ input,textarea{font-family:inherit;color:inherit}
 .main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
 .topbar{height:60px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--line)}
 .topbar .title{font-weight:600;font-size:.95rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.model-tag{display:flex;align-items:center;gap:8px;border:1px solid var(--accent);background:var(--accent-soft);
-  color:var(--accent-deep);border-radius:999px;padding:7px 14px;font-size:.8rem;font-weight:700;max-width:44vw}
-.model-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:dotPulse 2s var(--ease) infinite}
-@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.45}}
-.model-tag span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+select.model-tag{border:1px solid var(--accent);background:var(--accent-soft);
+  color:var(--accent-deep);border-radius:999px;padding:7px 12px;font-size:.8rem;font-weight:700;max-width:44vw;
+  outline:none;cursor:pointer;font-family:inherit}
+select.model-tag:focus{box-shadow:0 0 0 3px var(--accent-soft)}
+select.model-tag option{color:var(--ink);background:var(--surface);font-weight:500}
 .announce{display:flex;align-items:center;gap:10px;background:var(--accent-soft);color:var(--accent-deep);
   padding:9px 18px;font-size:.85rem;border-bottom:1px solid var(--line)}
 .announce span{flex:1}
