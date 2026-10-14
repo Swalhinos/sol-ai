@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SOL.ai — Admin</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+<!-- login -->
+<div id="alogin" class="gate" hidden>
+  <div class="gate-card">
+    <h1>Admin</h1>
+    <p>Enter the admin password to continue.</p>
+    <div class="gate-row">
+      <input id="apass" type="password" placeholder="Password" autocomplete="off" aria-label="Admin password">
+      <button id="aloginBtn" class="btn-primary">Enter</button>
+    </div>
+    <div class="gate-err" id="aerr" role="alert"></div>
+  </div>
+</div>
+<!-- dashboard -->
+<div id="dash" hidden>
+  <header class="ad-top">
+    <div class="ad-brand"><span class="ai-logo" id="adLogo"></span><span>SOL.ai · Admin</span></div>
+    <button class="btn-ghost" id="alogout">Sign out</button>
+  </header>
+  <nav class="ad-tabs">
+    <button class="ad-tab active" data-tab="tokens">Tokens</button>
+    <button class="ad-tab" data-tab="stats">Usage</button>
+    <button class="ad-tab" data-tab="settings">Settings</button>
+  </nav>
+  <main class="ad-main">
+    <section id="tab-tokens">
+      <div class="ad-card">
+        <h2>Create access token</h2>
+        <div class="ad-row">
+          <input id="ntName" type="text" placeholder="Name (e.g. Ahmed)" maxlength="60">
+          <input id="ntMax" type="number" placeholder="Message limit (0 = unlimited)" min="0">
+          <button class="btn-primary" id="ntCreate">Create</button>
+        </div>
+      </div>
+      <div class="ad-card">
+        <h2>Tokens <span class="count" id="tokCount"></span></h2>
+        <div id="tokList"></div>
+      </div>
+    </section>
+    <section id="tab-stats" hidden>
+      <div class="stat-grid" id="statGrid"></div>
+      <div class="ad-card"><h2>Note</h2><p class="muted">Token counts are estimates (characters ÷ 4). Limits: Gemini free tier applies per API key.</p></div>
+    </section>
+    <section id="tab-settings" hidden>
+      <div class="ad-card">
+        <h2>AI settings</h2>
+        <label>Model<input id="sModel" type="text" placeholder="gemini-3.5-flash"></label>
+        <label>System prompt<textarea id="sSystem" placeholder="Instructions the AI always follows..."></textarea></label>
+        <div class="ad-row">
+          <label>Temperature<input id="sTemp" type="number" min="0" max="2" step="0.1"></label>
+          <label>Max tokens<input id="sTokens" type="number" min="1" max="128000"></label>
+        </div>
+        <button class="btn-primary" id="sSave">Save settings</button>
+      </div>
+      <div class="ad-card">
+        <h2>Announcement <span class="muted-sm">— banner shown to all users</span></h2>
+        <label><textarea id="sAnn" placeholder="Leave empty to hide the banner..."></textarea></label>
+        <button class="btn-primary" id="sAnnSave">Publish announcement</button>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="/admin.js"></script>
+</body>
+</html>
