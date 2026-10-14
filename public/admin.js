@@ -92,15 +92,25 @@ async function loadStats(){
   $("ovGrid").innerHTML=items.slice(0,4).map(([l,v])=>'<div class="stat"><div class="v">'+esc(String(v))+'</div><div class="l">'+l+"</div></div>").join("");
 }
 /* ---------- settings ---------- */
+function applyProviderHint(){
+  const groq=$("sProvider").value==="groq";
+  $("sModel").placeholder=groq?"openai/gpt-oss-120b":"gemini-3.5-flash";
+  $("modelHint").textContent=groq
+    ? "Groq models available on your key: openai/gpt-oss-120b (strongest), openai/gpt-oss-20b (faster), qwen/qwen3.8-27b. Needs GROQ_API_KEY set in Vercel."
+    : "Gemini models, e.g. gemini-3.5-flash. Needs GEMINI_API_KEY set in Vercel.";
+}
+$("sProvider").addEventListener("change",applyProviderHint);
 async function loadSettings(){
   const s=await api("/api/admin/settings");
+  $("sProvider").value=s.provider==="groq"?"groq":"gemini";
   $("sModel").value=s.model||"";$("sSystem").value=s.system||"";
   $("sTemp").value=s.temp;$("sTokens").value=s.maxTokens;$("sAnn").value=s.announcement||"";
+  applyProviderHint();
 }
 $("sSave").addEventListener("click",async()=>{
   try{
     await api("/api/admin/settings",{method:"POST",body:JSON.stringify({
-      model:$("sModel").value,temp:$("sTemp").value,maxTokens:$("sTokens").value,system:$("sSystem").value})});
+      provider:$("sProvider").value,model:$("sModel").value,temp:$("sTemp").value,maxTokens:$("sTokens").value,system:$("sSystem").value})});
     toast("AI settings saved");
   }catch(e){toast("Error: "+e.message);}
 });
