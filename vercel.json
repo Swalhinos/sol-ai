@@ -1,1 +1,1 @@
-{"functions":{"api/chat.js":{"maxDuration":60}},"rewrites":[{"destination":"/admin.html","source":"/admin"}]}
+{"functions":{"api/chat.js":{"maxDuration":60}},"headers":[{"headers":[{"key":"Cache-Control","value":"public, max-age=0, must-revalidate"}],"source":"/(.*)"}],"rewrites":[{"destination":"/admin.html","source":"/admin"}]}
