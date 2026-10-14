@@ -11,7 +11,8 @@ module.exports = async (req, res) => {
   catch (e) { return sendJson(res, 400, { error: "Bad request." }); }
 
   try {
-    const tokens = await getTokens();
+    // Fetch token list + settings in parallel: one round trip instead of two.
+    const [tokens, cfg] = await Promise.all([getTokens(), getSettings()]);
     const tok = findValid(tokens, String((body && body.token) || "").trim());
     if (!tok) return sendJson(res, 403, { error: "Invalid or revoked token." });
     if (!(await rateOk(tok.id))) return sendJson(res, 429, { error: "Too many requests — slow down a little." });
@@ -21,15 +22,15 @@ module.exports = async (req, res) => {
     const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
     if (!GEMINI_KEY) return sendJson(res, 500, { error: "Server is not configured (missing API key)." });
 
-    const msgs = Array.isArray(body.messages) ? body.messages.slice(-40) : [];
+    // Keep history small: oversized payloads slow down every request.
+    const msgs = Array.isArray(body.messages) ? body.messages.slice(-24) : [];
     if (!msgs.length || !msgs.every(m => m && typeof m.text === "string"))
       return sendJson(res, 400, { error: "Bad messages." });
 
-    const cfg = await getSettings();
     const gBody = {
       contents: msgs.map(m => ({
         role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.text.slice(0, 30000) }]
+        parts: [{ text: m.text.slice(0, 12000) }]
       })),
       generationConfig: {}
     };
@@ -58,7 +59,8 @@ module.exports = async (req, res) => {
       }
       if ((gRes.status === 429 || gRes.status === 503) && attempt < 2) {
         attempt++;
-        await new Promise(r => setTimeout(r, 2000 * attempt));
+        // Short backoff: long waits here were the biggest perceived slowdown.
+        await new Promise(r => setTimeout(r, 900 * attempt));
         continue;
       }
       break;
@@ -115,8 +117,10 @@ module.exports = async (req, res) => {
       const inT = estTokens(inText), outT = estTokens(outText);
       tok.usedMsg = (tok.usedMsg || 0) + 1;
       tok.usedTok = (tok.usedTok || 0) + inT + outT;
-      await saveTokens(tokens);
-      await logUsage({ t: Date.now(), tokenId: tok.id, model: cfg.model, inT, outT, ok: true });
+      await Promise.all([
+        saveTokens(tokens),
+        logUsage({ t: Date.now(), tokenId: tok.id, model: cfg.model, inT, outT, ok: true })
+      ]);
     }
   } catch (e) {
     try { sendJson(res, 500, { error: e.message || "Server error." }); }
