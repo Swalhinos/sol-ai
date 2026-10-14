@@ -41,7 +41,10 @@
 .ad-field input,.ad-field textarea{border:1px solid var(--line2);border-radius:12px;background:var(--bg);
   padding:11px 14px;font-size:.9rem;font-family:inherit;font-weight:400;outline:none;width:100%;
   color:var(--ink);transition:border-color .18s,box-shadow .18s}
-.ad-field input:focus,.ad-field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ad-field input:focus,.ad-field textarea:focus,.ad-field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.ad-field select{border:1px solid var(--line2);border-radius:12px;background:var(--bg);padding:11px 14px;
+  font-size:.9rem;font-family:inherit;outline:none;width:100%;color:var(--ink);transition:border-color .18s,box-shadow .18s;cursor:pointer}
+.ad-card .muted{margin:-6px 0 12px}
 .ad-field textarea{resize:vertical;min-height:92px;line-height:1.65}
 .ad-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
 .ad-row>.ad-field{flex:1;min-width:160px}
