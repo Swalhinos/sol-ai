@@ -14,9 +14,25 @@ const DOTS='<svg viewBox="0 0 64 40" fill="none"><circle cx="11" cy="27" r="9" f
 const logoHTML=cls=>'<span class="ai-logo'+(cls?" "+cls:"")+'">'+DOTS+'</span>';
 $("gateLogo").innerHTML=DOTS;$("brandLogo").innerHTML=DOTS;
 
-const state={token:store.get("token",null),name:"",conversations:store.get("convos",[]),
+// Conversations are namespaced per token: two people sharing one browser
+// must never see each other's chats. The key is a hash of the token
+// (separation, not secrecy — the token itself already lives in storage).
+function hashTok(t){let h=5381;const s=String(t||"");for(let i=0;i<s.length;i++){h=((h*33)^s.charCodeAt(i))>>>0;}return h.toString(36);}
+function convosKey(){return "convos:"+hashTok(state.token||"");}
+function loadConvos(){
+  if(!state.token)return [];
+  const k=convosKey();let c=store.get(k,null);
+  if(c===null){
+    // One-time adoption: history saved before namespacing belongs to the
+    // token that is logged in now. Afterwards the shared key is deleted.
+    c=store.get("convos",[])||[];store.set(k,c);store.del("convos");
+  }
+  return Array.isArray(c)?c:[];
+}
+const state={token:store.get("token",null),name:"",conversations:[],
   activeId:null,sending:false,theme:store.get("theme","auto"),dir:store.get("dir","ltr")};
-function persist(){store.set("convos",state.conversations);store.set("theme",state.theme);store.set("dir",state.dir);}
+state.conversations=loadConvos();
+function persist(){if(state.token)store.set(convosKey(),state.conversations);store.set("theme",state.theme);store.set("dir",state.dir);}
 const active=()=>state.conversations.find(c=>c.id===state.activeId)||null;
 
 /* ================= theme / dir ================= */
@@ -47,6 +63,9 @@ async function enter(){
   $("gateBtn").disabled=true;$("gateErr").textContent="";
   try{const name=await verifyToken(tok);
     state.token=tok;state.name=name;store.set("token",tok);
+    // Switching tokens switches history: never show the previous
+    // token's conversations to this token.
+    state.conversations=loadConvos();state.activeId=null;
     $("gate").hidden=true;$("app").hidden=false;bootChat();
   }catch(e){$("gateErr").textContent=e.message||"Invalid token.";}
   $("gateBtn").disabled=false;
