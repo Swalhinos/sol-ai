@@ -40,15 +40,12 @@ input,textarea{font-family:inherit;color:inherit}
 .btn-primary:hover{background:var(--accent-deep);transform:translateY(-1px)}
 .btn-primary:active{transform:scale(.97)}
 
-/* ---------- AI logo ---------- */
-.ai-logo{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#E8936B,var(--accent) 45%,var(--accent-deep));
-  display:inline-grid;place-items:center;flex-shrink:0;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;vertical-align:middle}
-.ai-logo svg{width:19px;height:19px;position:relative;z-index:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.28))}
-.ai-logo::after{content:"";position:absolute;inset:-45%;background:conic-gradient(from 0deg,transparent 0 68%,rgba(255,255,255,.55) 84%,transparent 100%);animation:logoSpin 2.8s linear infinite}
-@keyframes logoSpin{to{transform:rotate(360deg)}}
-.ai-logo.lg{width:62px;height:62px}.ai-logo.lg svg{width:34px;height:34px}
+/* ---------- SOL.ai logo: three flowing dots ---------- */
+.ai-logo{display:inline-flex;align-items:center;flex-shrink:0;vertical-align:middle;width:34px;line-height:0}
+.ai-logo svg{width:100%;height:auto;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18))}
+.ai-logo.lg{width:62px}
 .ai-logo.thinking{animation:logoBreathe 1.7s var(--ease) infinite}
-@keyframes logoBreathe{0%,100%{transform:scale(1);box-shadow:0 0 0 0 var(--accent-soft)}50%{transform:scale(1.12);box-shadow:0 0 0 14px rgba(217,119,87,0)}}
+@keyframes logoBreathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:.7}}
 
 /* ---------- layout ---------- */
 #app{display:flex;height:100dvh;overflow:hidden}
@@ -57,7 +54,7 @@ input,textarea{font-family:inherit;color:inherit}
 #sidebar{transition:margin .3s var(--ease),transform .3s var(--ease)}
 .sb-head{display:flex;align-items:center;gap:10px;padding:16px 14px 10px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.02rem;flex:1;min-width:0}
-.brand .ai-logo{width:30px;height:30px}.brand .ai-logo svg{width:17px;height:17px}
+.brand .ai-logo{width:30px}
 .sb-new{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted);transition:all .18s;flex-shrink:0}
 .sb-new:hover{background:var(--surface2);color:var(--ink)}
 .sb-new svg{width:18px;height:18px}
@@ -100,8 +97,7 @@ input,textarea{font-family:inherit;color:inherit}
 #chat{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
 .chat-col{max-width:780px;margin:0 auto;padding:34px 22px 20px;display:flex;flex-direction:column;gap:22px;min-height:100%}
 #home{text-align:center;padding-top:6vh;animation:rise .5s var(--ease) both}
-#home .ai-logo{width:58px;height:58px;margin:0 auto 20px}
-#home .ai-logo svg{width:32px;height:32px}
+#home .ai-logo{width:58px;margin:0 auto 20px}
 #home h1{font-family:var(--serif);font-size:1.75rem;font-weight:600;margin-bottom:10px}
 #home p{color:var(--muted);font-size:.94rem;max-width:420px;margin:0 auto 30px;line-height:1.6}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:660px;margin:0 auto;text-align:start}
